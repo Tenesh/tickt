@@ -10,7 +10,7 @@ import {User} from '../models/user';
 
 const router = express.Router();
 
-router.get('/api/users/signup',
+router.post('/api/users/signup',
     [
         body('email')
             .isEmail()
