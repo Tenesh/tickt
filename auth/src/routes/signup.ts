@@ -1,7 +1,11 @@
 import express, {Request, Response} from 'express';
 import {body, validationResult} from 'express-validator';
+import jwt from 'jsonwebtoken';
+
 import {RequestValidationError} from '../errors/request-validation-error';
-import {DatabaseConnectionError} from '../errors/database-connection-error';
+import {BadRequestError} from '../errors/bad-request-error';
+
+import {User} from '../models/user';
 
 const router = express.Router();
 
@@ -24,10 +28,23 @@ router.get('/api/users/signup',
 
         const {email, password} = req.body;
 
-        console.log('Creating a user...');
-        throw new DatabaseConnectionError();
+        const existingUser = await User.findOne({email});
 
-        res.send({});
+        if (existingUser) {
+            throw new BadRequestError('User already exists');
+        }
+
+        const user = User.build({email: email, password: password});
+        await user.save();
+
+        // Generate jwt
+        const userJwt = jwt.sign({id: user._id, email: user.email}, process.env.JWT_KEY!);
+
+        // Add to session object
+        req.session = {jwt: userJwt};
+
+        res.status(201).send(user);
+
     });
 
 export {router as signupRouter};
