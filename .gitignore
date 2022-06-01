@@ -105,3 +105,6 @@ dist
 
 # Workspaces
 .idea
+
+# Common repo
+/common/
