@@ -1,4 +1,4 @@
-import express, {Request, Response, NextFunction} from 'express';
+import express, {Request, Response} from 'express';
 import {body} from 'express-validator';
 import {requireAuth, validateRequest} from '@ticketeer/common';
 
@@ -16,7 +16,7 @@ router.post('/api/tickets', requireAuth,
             .isFloat({gt: 0})
             .withMessage('Price must be greater than 0')
     ], validateRequest,
-    async (req: Request, res: Response, next: NextFunction) => {
+    async (req: Request, res: Response) => {
         const {title, price} = req.body;
 
         const ticket = Ticket.build({
@@ -27,7 +27,7 @@ router.post('/api/tickets', requireAuth,
 
         await ticket.save();
 
-        res.sendStatus(201).send(ticket);
+        res.status(201).send(ticket);
     });
 
 export {router as createTicketRouter}
