@@ -1,7 +1,8 @@
 import request from 'supertest';
-import {app} from '../../app';
 import mongoose from 'mongoose';
-import {Ticket} from '../../models/ticket';
+
+import {app} from '../../app';
+import {natsWrapper} from '../../nats-wrapper';
 
 const title = 'Concert';
 const price = 20;
@@ -99,3 +100,27 @@ it('returns ticket if the user provide valid parameters and owner of the ticket'
     expect(ticketResponse.body.title).toEqual('New Title');
     expect(ticketResponse.body.price).toEqual(700);
 })
+
+it('publishes an event', async () =>{
+    const cookie = global.signin();
+
+    const response = await request(app)
+        .post(`/api/tickets`)
+        .set('Cookie', cookie)
+        .send({
+            title: title,
+            price: price
+        })
+        .expect(201);
+
+    await request(app)
+        .put(`/api/tickets/${response.body.id}`)
+        .set('Cookie', cookie)
+        .send({
+            title: 'New Title',
+            price: 700
+        })
+        .expect(201);
+
+    expect(natsWrapper.client.publish).toHaveBeenCalled();
+});

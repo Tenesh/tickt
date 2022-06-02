@@ -1,7 +1,7 @@
 import request from 'supertest';
-import {app} from '../../app';
 import mongoose from 'mongoose';
-import {Ticket} from '../../models/ticket';
+
+import {app} from '../../app';
 
 it('returns 404 if ticket not found', async () => {
     const id = new mongoose.Types.ObjectId().toHexString();
