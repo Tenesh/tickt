@@ -7,6 +7,7 @@ jest.mock('../../nats-wrapper');
 import {app} from '../../app';
 import {Order} from '../../models/order';
 import {Ticket} from '../../models/ticket';
+import {natsWrapper} from '../../nats-wrapper';
 
 
 it('returns an error if ticket does not exits', async () => {
@@ -59,3 +60,21 @@ it('reserves ticket', async () => {
         })
         .expect(201);
 })
+
+it('publishes an event', async () =>{
+    const ticket = Ticket.build({
+        title: 'concert',
+        price: 20
+    });
+    await ticket.save();
+
+    const{body: {order}} = await request(app)
+        .post('/api/orders')
+        .set('Cookie', global.signin())
+        .send({
+            ticketId: ticket.id
+        })
+        .expect(201);
+
+    expect(natsWrapper.client.publish).toHaveBeenCalled();
+});
