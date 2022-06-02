@@ -1,13 +1,14 @@
 import express, {Request, Response} from 'express';
-import {NotAuthorizedError, NotFoundError, requireAuth} from '@ticketeer/common';
-
 import {Order} from '../models/order';
+
+import {NotAuthorizedError, NotFoundError, requireAuth, OrderStatus} from '@ticketeer/common';
 
 const router = express.Router();
 
-router.get('/api/orders/:orderId', requireAuth,
+router.patch('/api/orders/:orderId', requireAuth,
     async (req: Request, res: Response) => {
-        const order = await Order.findById(req.params.orderId).populate('ticket');
+    const orderId = req.params.orderId;
+        const order = await Order.findById(orderId);
 
         if(!order){
             throw new NotFoundError();
@@ -17,7 +18,10 @@ router.get('/api/orders/:orderId', requireAuth,
             throw new NotAuthorizedError();
         }
 
+        order.status = OrderStatus.Cancelled;
+        await order.save();
+
         res.status(200).send({order});
     });
 
-export {router as showOrderRouter}
+export {router as updateOrderRouter}

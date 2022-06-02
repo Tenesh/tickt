@@ -1,11 +1,12 @@
 import mongoose from 'mongoose';
+import {OrderStatus} from '@ticketeer/common';
 
+import {Order} from './order';
 
 // Interface for new ticket creation.
 interface TicketAttrs {
     title: string;
     price: number;
-    userId: string;
 }
 
 // Interface for Ticket Model
@@ -14,10 +15,11 @@ interface TicketModel extends mongoose.Model<TicketDoc> {
 }
 
 // Interface for Ticket Document
-interface TicketDoc extends mongoose.Document {
+export interface TicketDoc extends mongoose.Document {
     title: string;
     price: number;
-    userId: string;
+
+    isReserved(): Promise<boolean>;
 }
 
 const ticketSchema = new mongoose.Schema({
@@ -27,15 +29,12 @@ const ticketSchema = new mongoose.Schema({
     },
     price: {
         type: Number,
-        required: true
-    },
-    userId: {
-        type: String,
-        required: true
+        required: true,
+        min: 0
     }
 }, {
     toJSON: {
-        transform(doc, ret){
+        transform(doc, ret) {
             ret.id = ret._id;
             delete ret._id;
         }
@@ -46,6 +45,21 @@ ticketSchema.statics.build = (attrs: TicketAttrs) => {
     return new Ticket(attrs);
 }
 
+ticketSchema.methods.isReserved = async function () {
+    //this === the ticket doc that just called with 'isReserved' on
+    const existingOrder = await Order.findOne({
+        ticket: this as any,
+        status: {
+            $in: [
+                OrderStatus.Created,
+                OrderStatus.AwaitingPayment,
+                OrderStatus.Complete
+            ]
+        }
+    })
+
+    return !!existingOrder;
+}
 const Ticket = mongoose.model<TicketDoc, TicketModel>('Ticket', ticketSchema);
 
 
