@@ -24,7 +24,8 @@ it('returns an error if ticket does not exits', async () => {
 it('returns an error if ticket reserved', async () => {
     const ticket = Ticket.build({
         title: 'concert',
-        price: 20
+        price: 20,
+        id: new mongoose.Types.ObjectId().toHexString()
     });
     await ticket.save();
 
@@ -48,7 +49,8 @@ it('returns an error if ticket reserved', async () => {
 it('reserves ticket', async () => {
     const ticket = Ticket.build({
         title: 'concert',
-        price: 20
+        price: 20,
+        id: new mongoose.Types.ObjectId().toHexString()
     });
     await ticket.save();
 
@@ -64,7 +66,8 @@ it('reserves ticket', async () => {
 it('publishes an event', async () =>{
     const ticket = Ticket.build({
         title: 'concert',
-        price: 20
+        price: 20,
+        id: new mongoose.Types.ObjectId().toHexString()
     });
     await ticket.save();
 
