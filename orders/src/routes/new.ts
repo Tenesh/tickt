@@ -1,7 +1,8 @@
 import express, {Request, Response} from 'express';
 import mongoose from 'mongoose';
 import {body} from 'express-validator';
-import {BadRequestError, NotFoundError, OrderStatus, requireAuth, validateRequest} from '@ticketeer/common';
+import {BadRequestError, NotFoundError, requireAuth, validateRequest} from '@ticketeer/common';
+import {OrderStatus} from '@ticketeer/common';
 
 import {natsWrapper} from '../nats-wrapper';
 import {Order} from '../models/order';
