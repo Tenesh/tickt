@@ -1,6 +1,6 @@
 import express, {Request, Response} from 'express';
 import {body} from 'express-validator';
-import {NotFoundError, validateRequest, NotAuthorizedError, requireAuth} from '@ticketeer/common';
+import {NotFoundError, validateRequest, NotAuthorizedError, requireAuth, BadRequestError} from '@ticketeer/common';
 
 import {Ticket} from '../models/ticket';
 import {TicketUpdatedPublisher} from '../events/publishers/ticket-updated-publisher';
@@ -25,6 +25,10 @@ router.put('/api/tickets/:id', requireAuth,
 
         if(!ticket){
             throw new NotFoundError();
+        }
+
+        if(ticket.orderId){
+            throw new BadRequestError('Cannot edit a reserved ticket');
         }
 
         if(req.currentUser!.id !== ticket.userId){

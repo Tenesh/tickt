@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 
 import {app} from '../../app';
 import {natsWrapper} from '../../nats-wrapper';
+import {Ticket} from '../../models/ticket';
 
 const title = 'Concert';
 const price = 20;
@@ -101,7 +102,7 @@ it('returns ticket if the user provide valid parameters and owner of the ticket'
     expect(ticketResponse.body.price).toEqual(700);
 })
 
-it('publishes an event', async () =>{
+it('publishes an event', async () => {
     const cookie = global.signin();
 
     const response = await request(app)
@@ -124,3 +125,28 @@ it('publishes an event', async () =>{
 
     expect(natsWrapper.client.publish).toHaveBeenCalled();
 });
+
+it('returns 400 error if ticket is reserved', async () => {
+    const cookie = global.signin();
+
+    const response = await request(app)
+        .post(`/api/tickets`)
+        .set('Cookie', cookie)
+        .send({
+            title: title,
+            price: price
+        })
+        .expect(201);
+
+    const ticket = await Ticket.findById(response.body.id);
+    ticket!.set({orderId: new mongoose.Types.ObjectId().toHexString()})
+    await ticket!.save();
+
+    await request(app)
+        .put(`/api/tickets/${response.body.id}`)
+        .set('Cookie', cookie)
+        .send({
+            price: 50
+        })
+        .expect(400);
+})

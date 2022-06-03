@@ -1,34 +1,32 @@
-import {OrderCreatedEvent, OrderStatus} from '@ticketeer/common';
+import {OrderCancelledEvent, OrderStatus} from '@ticketeer/common';
 import mongoose from 'mongoose';
 import {Message} from 'node-nats-streaming';
 
 import {natsWrapper} from '../../../nats-wrapper';
-import {OrderCreatedListener} from '../order-created-listener';
+import {OrderCancelledListener} from '../order-cancelled-listener';
 import {Ticket} from '../../../models/ticket';
 
 
 const setup = async () => {
     // Create instance of listener
-    const listener = new OrderCreatedListener(natsWrapper.client);
+    const listener = new OrderCancelledListener(natsWrapper.client);
 
     // Create and save a ticket
+    const orderId = new mongoose.Types.ObjectId().toHexString();
     const ticket = Ticket.build({
         userId: new mongoose.Types.ObjectId().toHexString(),
         title: 'concert',
         price: 10,
     })
+    ticket.set({orderId});
     await ticket.save();
 
 
-    const data: OrderCreatedEvent['data'] = {
-        id: new mongoose.Types.ObjectId().toHexString(),
+    const data: OrderCancelledEvent['data'] = {
+        id: orderId,
         version: 0,
-        userId: ticket.userId,
-        status: OrderStatus.Created,
-        expiresAt: 'random',
         ticket: {
             id: ticket.id,
-            price: ticket.price,
         }
     }
 
@@ -41,7 +39,7 @@ const setup = async () => {
     return {listener, data, msg, ticket};
 }
 
-it('sets the orderId of the ticket', async () => {
+it('updates ticket when order cancelled', async () => {
     const {listener, data, msg, ticket} = await setup();
 
     // Call onMessage function with data object + message object
@@ -49,7 +47,7 @@ it('sets the orderId of the ticket', async () => {
 
     // Write assertions to make sure ticket created
     const updatedTicket = await Ticket.findById(ticket.id);
-    expect(updatedTicket!.orderId).toEqual(data.id);
+    expect(updatedTicket!.orderId).toEqual(undefined);
 });
 
 it('acks the message', async () => {
@@ -69,5 +67,4 @@ it('it publishers a ticket updated event', async () => {
     await listener.onMessage(data, msg);
 
     expect(natsWrapper.client.publish).toHaveBeenCalled();
-
 });

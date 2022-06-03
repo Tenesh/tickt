@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import jwt from 'jsonwebtoken';
 
 jest.mock('../nats-wrapper');
+jest.setTimeout(30000);
 
 
 let mongo:any;
