@@ -1,21 +1,22 @@
 import Link from 'next/link';
 
-const LandingPage = ({currentUser, tickets}) => {
+const OrderIndex = ({orders}) => {
     let row = 0
-    const ticketList = tickets.map(ticket => {
+    const orderList = orders.map(order => {
         row++
         return (
-            <tr key={ticket.id}>
+            <tr key={order.id}>
                 <th scope="row">{row}</th>
-                <td>{ticket.title}</td>
-                <td>{ticket.price}</td>
-                <td><Link href="/tickets/[ticketId]" as={`/tickets/${ticket.id}`}>View</Link></td>
+                <td>{order.ticket.title}</td>
+                <td>{order.price}</td>
+                <td>{order.status}</td>
+                <td><Link href="/orders/[orderId]" as={`/orders/${order.id}`}>View</Link></td>
             </tr>
         );
     })
     return (
         <div className="container">
-            <h1 className="">Tickets</h1>
+            <h1 className="">Orders</h1>
             <div className="">
                 <table className="table table-hover">
                     <thead>
@@ -23,11 +24,12 @@ const LandingPage = ({currentUser, tickets}) => {
                         <th scope="col"></th>
                         <th scope="col">Title</th>
                         <th scope="col">Price</th>
+                        <th scope="col">Status</th>
                         <th scope="col">Link</th>
                     </tr>
                     </thead>
                     <tbody>
-                    {ticketList}
+                    {orderList}
                     </tbody>
                 </table>
             </div>
@@ -35,9 +37,9 @@ const LandingPage = ({currentUser, tickets}) => {
     );
 };
 
-LandingPage.getInitialProps = async (context, client, currentUser) => {
-    const {data} = await client.get('/api/tickets');
-    return {tickets: data}
+OrderIndex.getInitialProps = async (context, client) => {
+    const {data} = await client.get('/api/orders');
+    return {orders: data}
 };
 
-export default LandingPage;
+export default OrderIndex;

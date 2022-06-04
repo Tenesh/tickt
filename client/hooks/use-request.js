@@ -4,12 +4,15 @@ import {useState} from 'react';
 export default ({url, method, body, onSuccess}) => {
     const [errors, setErrors] = useState([]);
 
-    const doRequest = async () => {
+    const doRequest = async (props = {}) => {
         try {
             setErrors(null);
-            const response = await axios[method](url, body);
+            const response = await axios[method](url,
+                {
+                    ...body, ...props
+                });
 
-            if(onSuccess){
+            if (onSuccess) {
                 onSuccess(response.data);
             }
 
@@ -23,7 +26,8 @@ export default ({url, method, body, onSuccess}) => {
                     </ul>
                 </div>
             )
-        };
+        }
+        ;
 
     };
 
