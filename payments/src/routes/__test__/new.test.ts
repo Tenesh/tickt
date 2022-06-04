@@ -3,6 +3,7 @@ import request from 'supertest';
 import {app} from '../../app';
 import mongoose from 'mongoose';
 import {Order} from '../../models/order';
+import {Payment} from '../../models/payment';
 import {OrderStatus} from '@ticketeer/common';
 import {stripe} from '../../../stripe';
 
@@ -89,4 +90,8 @@ it('returns a 201 with valid inputs when purchasing success', async () => {
     })
 
     expect(charge).toBeDefined();
+
+    const payment = Payment.findOne({stripeId: charge!.id, orderId: order.id});
+
+    expect(payment).not.toBeNull();
 });

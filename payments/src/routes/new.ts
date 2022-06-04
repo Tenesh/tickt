@@ -3,7 +3,10 @@ import {body} from 'express-validator';
 import {requireAuth, validateRequest, BadRequestError, NotFoundError, NotAuthorizedError, OrderStatus} from '@ticketeer/common';
 
 import {Order} from '../models/order';
+import {Payment} from '../models/payment';
 import {stripe} from '../../stripe';
+import {PaymentCreatedPublisher} from '../events/publishers/payment-created-publisher';
+import {natsWrapper} from '../nats-wrapper';
 
 const router = express.Router();
 
@@ -33,13 +36,30 @@ router.post('/api/payments', requireAuth,
             throw new BadRequestError('Cannot pay for cancelled order');
         }
 
-        await stripe.charges.create({
+        const charge = await stripe.charges.create({
             currency: 'usd',
             amount: order.price * 100,
             source: token
         });
 
-        res.status(201).send({success: true});
+        const payment = Payment.build({
+            userId: req.currentUser!.id,
+            orderId: orderId,
+            stripeId: charge.id,
+            amount: charge.amount
+        });
+        await payment.save();
+
+        new PaymentCreatedPublisher(natsWrapper.client).publish({
+            id: payment.id,
+            userId: payment.userId,
+            orderId: payment.orderId,
+            stripeId: payment.stripeId,
+            amount: payment.amount,
+            version: payment.version
+        });
+
+        res.status(201).send({id:payment.id, amount: payment.amount, orderId: payment.orderId, userId: payment.userId});
     });
 
 export {router as createChargeRouter}
